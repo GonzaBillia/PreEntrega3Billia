@@ -1,0 +1,18 @@
+#header{
+    width: 100%;
+    height: 55px;
+}
+
+h1{
+    text-align: center;
+    margin-top: 10px;
+}
+
+#contenedor_microprocesadores, #contenedor_placasmadre, #contenedor_discos, #contenedor_memorias, #contenedor_fuentes, #contenedor_gabinetes{
+    display: flex;
+    flex-direction: row;
+}
+
+.card{
+    margin: 5px
+}
