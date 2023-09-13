@@ -1,3 +1,5 @@
+const localStorageKey = "ListaCarrito";
+
 class Componente {
     constructor(tipoComponente, socaloMicro, socaloDisco, socaloRam) {
         this.tipoComponente = tipoComponente.toUpperCase();
@@ -20,7 +22,7 @@ class Producto {
         this.componente = componente;
     }
 
-    descripcionCarrito(){
+    descripcionCarrito() {
         return `<div class="card mb-3" style="max-width: 540px;">
         <div class="row g-0">
             <div class="col-md-4">
@@ -38,7 +40,7 @@ class Producto {
     </div>`
     }
 
-    descripcionProducto(){
+    descripcionProducto() {
         return `<div class="card" style="width: 15rem;">
         <img src="${this.img}" class="card-img-top" alt="...">
         <div class="card-body">
@@ -113,32 +115,36 @@ class Gabinete {
 class Carrito {
     constructor() {
         this.listaCarrito = [];
+        this.total = 0;
     }
 
     agregar(producto) {
-        if (producto instanceof Producto){
+        if (producto instanceof Producto) {
             this.listaCarrito.push(producto);
         }
-        
+        this.calcularTotal();
     }
 
-    guardarEnStorage(){
+    guardarEnStorage() {
         let listaCarritoJSON = JSON.stringify(this.listaCarrito);
-        localStorage.setItem("ListaCarrito", listaCarritoJSON);
+        localStorage.setItem(localStorageKey, listaCarritoJSON);
     }
 
-    recuperarStorage(){
-        let CarritoJSON = localStorage.getItem("ListaCarrito");
+    recuperarStorage() {
+        let CarritoJSON = localStorage.getItem(localStorageKey);
         let listaCarritoJS = JSON.parse(CarritoJSON);
         let listaAux = [];
 
+        if (listaCarritoJS !== null) {
+            listaCarritoJS.forEach(producto => {
+                let nuevoProducto = new Producto(producto.id, producto.tipoItem, producto.marca, producto.modelo, producto.precio, producto.stock, producto.img)
+                listaAux.push(nuevoProducto);
+            })
+        }
 
-        listaCarritoJS.forEach( producto =>{
-            let nuevoProducto = new Producto(producto.id, producto.tipoItem, producto.marca, producto.modelo, producto.precio, producto.stock, producto.img)
-            listaAux.push(nuevoProducto);
-        })
         this.listaCarrito = listaAux;
-        
+        carrito.calcularTotal();
+        carrito.mostrarTotal();
     }
 
     mostrarProducto() {
@@ -148,20 +154,86 @@ class Carrito {
             contenedor_carrito.innerHTML += producto.descripcionCarrito();
         });
     }
+
+    vaciarCarrito() {
+        let btnLimpiarCarrito = document.getElementById("limpiar_carrito");
+        btnLimpiarCarrito.addEventListener("click", () => {
+            this.listaCarrito = [];
+            this.guardarEnStorage();
+            this.mostrarProducto();
+            this.total = 0;
+            this.mostrarTotal();
+        })
+    }
+
+    calcularTotal() {
+        let acc = 0;
+
+        this.listaCarrito.forEach(producto => {
+            acc += producto.precio;
+        })
+        this.total = acc;
+    }
+
+    mostrarTotal() {
+        let mostrarTotal = document.getElementById("calcular_total");
+        mostrarTotal.innerHTML = this.total;
+    }
+
+    mostrarFinalizarCompra() {
+        let finalizarCompra = document.getElementById("finalizar_compra");
+        finalizarCompra.addEventListener("click", ()=>{
+            const swalWithBootstrapButtons = Swal.mixin({
+                customClass: {
+                    confirmButton: 'btn btn-success',
+                    cancelButton: 'btn btn-danger'
+                },
+                buttonsStyling: false
+            })
+    
+            swalWithBootstrapButtons.fire({
+                title: 'Finalizar Compra?',
+                text: "Se direccionara al formulario de Pago",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'No, Seguir Comprando',
+                cancelButtonText: 'Si, Ir a Pagar',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    swalWithBootstrapButtons.fire(
+                        'Puedes Seguir Comprando',
+                        'Tu carrito sigue ahi',
+                        'success'
+                    )
+                } else if (
+                    /* Read more about handling dismissals below */
+                    result.dismiss === Swal.DismissReason.cancel
+                ) {
+                    swalWithBootstrapButtons.fire(
+                        'Error',
+                        'Todavia no se Programo esto :(',
+                        'error'
+                    )
+                }
+            })
+        })
+        
+    }
 }
 
 
 
 const listaMicros = [];
 
-listaMicros.push(new Producto(1,"Microporcesador", "AMD", "Ryzen 3 3200G", 89000, 5, "images/micro-ryzen3-3200g-8843.jpg", new Microprocesador("AM4", true)));
-listaMicros.push(new Producto(2,"Microporcesador", "AMD", "Ryzen 5 5600G", 126000, 5, "images/ryzen-5-5600g-440ghz-1948.jpg", new Microprocesador("AM4", true)));
-listaMicros.push(new Producto(3,"Microporcesador", "AMD", "Ryzen 7 5700G", 189000, 5, "images/amd-ryzen-7-5700g-01-2356.jpg", new Microprocesador("AM4", true)));
+listaMicros.push(new Producto(1, "Microporcesador", "AMD", "Ryzen 3 3200G", 89000, 5, "images/micro-ryzen3-3200g-8843.jpg", new Microprocesador("AM4", true)));
+listaMicros.push(new Producto(2, "Microporcesador", "AMD", "Ryzen 5 5600G", 126000, 5, "images/ryzen-5-5600g-440ghz-1948.jpg", new Microprocesador("AM4", true)));
+listaMicros.push(new Producto(3, "Microporcesador", "AMD", "Ryzen 7 5700G", 189000, 5, "images/amd-ryzen-7-5700g-01-2356.jpg", new Microprocesador("AM4", true)));
 
 const listaPlacasMadre = [];
 
-listaPlacasMadre.push(new Producto(4, "placa Madre", "MSI", "A320M", 49000, 5, "images/mother-msi-a320ma-pro-0.jpg",new PlacaMadre("AM4", "DDR4", 2, "SATA", 4, "MicroATX")));
-listaPlacasMadre.push(new Producto(5, "Placa Madre", "Gigabyte", "A520M", 63000, 5, "images/mother-gigabyte-a520m-k-v2-ddr4-am4-0.jpg",new PlacaMadre("AM4", "DDR4", 2, "SATA", 4, "MicroATX")));
+listaPlacasMadre.push(new Producto(4, "placa Madre", "MSI", "A320M", 49000, 5, "images/mother-msi-a320ma-pro-0.jpg", new PlacaMadre("AM4", "DDR4", 2, "SATA", 4, "MicroATX")));
+listaPlacasMadre.push(new Producto(5, "Placa Madre", "Gigabyte", "A520M", 63000, 5, "images/mother-gigabyte-a520m-k-v2-ddr4-am4-0.jpg", new PlacaMadre("AM4", "DDR4", 2, "SATA", 4, "MicroATX")));
 listaPlacasMadre.push(new Producto(6, "Placa Madre", "Gigabyte", "B550M", 89000, 5, "images/mother-gigabyte-b550m-ds3h-0.jpg", new PlacaMadre("AM4", "DDR4", 4, "SATA", 4, "MiniATX")));
 
 const listaDiscos = [];
@@ -174,7 +246,7 @@ const listaMemorias = [];
 
 listaMemorias.push(new Producto(10, "MemoriaRam", "Crucial", "8GB 2666mhz", 15000, 5, "images/memoria-8gb-ddr4-2666-crucial-0.jpg", new MemoriaRam("DDR4", "8GB", "2666mhz")));
 listaMemorias.push(new Producto(11, "MemoriaRam", "Kingston", "Fury Beast 8GB 3200mhz", 19000, 5, "images/memoria-8gb-ddr4-2666-kingston-fury-beast-0.jpg", new MemoriaRam("DDR4", "8GB", "3200mhz")));
-listaMemorias.push(new Producto(12, "MemoriaRam", "Hyper X", "Fury RGB 16GB 3200mhz", 33000, 5, "images/memoria-8gb-ddr4-3200-kingston-fury-beast-white-rgb-0.jpg",new MemoriaRam("DDR4", "16GB", "3200mhz")));
+listaMemorias.push(new Producto(12, "MemoriaRam", "Hyper X", "Fury RGB 16GB 3200mhz", 33000, 5, "images/memoria-8gb-ddr4-3200-kingston-fury-beast-white-rgb-0.jpg", new MemoriaRam("DDR4", "16GB", "3200mhz")));
 
 const listaFuentes = [];
 
@@ -204,17 +276,21 @@ function mostrarProductos(arrayProducto, contenedor) {
     arrayProducto.forEach(producto => {
         const btn_ap = document.getElementById(`ap-${producto.id}`)
 
-        btn_ap.addEventListener("click", ()=>{;
+        btn_ap.addEventListener("click", () => {
             carrito.agregar(producto);
             carrito.guardarEnStorage();
             carrito.mostrarProducto();
+            carrito.calcularTotal();
+            carrito.mostrarTotal();
         })
     });
 }
 
 const carrito = new Carrito();
+carrito.mostrarTotal();
 
-
+carrito.recuperarStorage();
+carrito.mostrarProducto();
 
 
 mostrarProductos(listaMicros, contenedor_microprocesadores);
@@ -224,5 +300,6 @@ mostrarProductos(listaMemorias, contenedor_memorias);
 mostrarProductos(listaFuentes, contenedor_fuentes);
 mostrarProductos(listaGabinetes, contenedor_gabinetes);
 
-carrito.recuperarStorage();
-carrito.mostrarProducto();
+carrito.vaciarCarrito();
+carrito.mostrarFinalizarCompra();
+
